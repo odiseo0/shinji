@@ -1,8 +1,9 @@
 from typing import AsyncGenerator
+from contextlib import contextmanager
 
-from starlite import Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .session import AsyncSessionFactory, AsyncScopedSession
+from .session import AsyncSessionFactory
 
 
 async def get_db() -> AsyncGenerator:
@@ -14,25 +15,7 @@ async def get_db() -> AsyncGenerator:
             await session.close()
 
 
-async def session_after_request(response: Response) -> Response:
-    """
-    Inspects `response` to determine if we should commit, or rollback the database
-    transaction.
-    Finally, calls `remove()` on the scoped session.
-
-    Parameters
-    ----------
-    :response: Response
-
-    Returns
-    -------
-    Response
-    """
-    if 200 <= response.status_code < 300:
-        await AsyncScopedSession.commit()
-    else:
-        await AsyncScopedSession.rollback()
-
-    await AsyncScopedSession.remove()
-
-    return response
+@contextmanager
+async def session() -> AsyncSession:
+    async with AsyncSessionFactory() as session:
+        return session
