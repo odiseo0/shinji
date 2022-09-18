@@ -1,10 +1,10 @@
-import dataclasses
 from collections import defaultdict
 from enum import Enum
-from pathlib import PurePath
 from types import GeneratorType
 from typing import Any, Callable
+from datetime import datetime, timezone
 
+import orjson
 from pydantic import BaseModel
 from pydantic.json import ENCODERS_BY_TYPE
 
@@ -36,9 +36,9 @@ def jsonable_encoder(
     exclude_defaults: bool = False,
     exclude_none: bool = False,
     custom_encoder: dict[Any, Callable[[Any], Any]] | None = None,
-    sqlalchemy_safe: bool = True,
-) -> Any:
+) -> dict:
     custom_encoder = custom_encoder or {}
+
     if custom_encoder:
         if type(obj) in custom_encoder:
             return custom_encoder[type(obj)](obj)
@@ -46,12 +46,6 @@ def jsonable_encoder(
             for encoder_type, encoder_instance in custom_encoder.items():
                 if isinstance(obj, encoder_type):
                     return encoder_instance(obj)
-
-    if include is not None and not isinstance(include, (set, dict)):
-        include = set(include)
-
-    if exclude is not None and not isinstance(exclude, (set, dict)):
-        exclude = set(exclude)
 
     if isinstance(obj, BaseModel):
         encoder = getattr(obj.__config__, "json_encoders", {})
@@ -76,29 +70,10 @@ def jsonable_encoder(
             exclude_none=exclude_none,
             exclude_defaults=exclude_defaults,
             custom_encoder=encoder,
-            sqlalchemy_safe=sqlalchemy_safe,
-        )
-
-    if dataclasses.is_dataclass(obj):
-        obj_dict = dataclasses.asdict(obj)
-
-        return jsonable_encoder(
-            obj_dict,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            custom_encoder=custom_encoder,
-            sqlalchemy_safe=sqlalchemy_safe,
         )
 
     if isinstance(obj, Enum):
         return obj.value
-
-    if isinstance(obj, PurePath):
-        return str(obj)
 
     if isinstance(obj, (str, int, float, type(None))):
         return obj
@@ -115,11 +90,7 @@ def jsonable_encoder(
 
         for key, value in obj.items():
             if (
-                (
-                    not sqlalchemy_safe
-                    or (not isinstance(key, str))
-                    or (not key.startswith("_sa"))
-                )
+                ((not isinstance(key, str)) or (not key.startswith("_sa")))
                 and (value is not None or not exclude_none)
                 and key in allowed_keys
             ):
@@ -129,7 +100,6 @@ def jsonable_encoder(
                     exclude_unset=exclude_unset,
                     exclude_none=exclude_none,
                     custom_encoder=custom_encoder,
-                    sqlalchemy_safe=sqlalchemy_safe,
                 )
                 encoded_value = jsonable_encoder(
                     value,
@@ -137,7 +107,6 @@ def jsonable_encoder(
                     exclude_unset=exclude_unset,
                     exclude_none=exclude_none,
                     custom_encoder=custom_encoder,
-                    sqlalchemy_safe=sqlalchemy_safe,
                 )
                 encoded_dict[encoded_key] = encoded_value
 
@@ -156,7 +125,6 @@ def jsonable_encoder(
                     exclude_defaults=exclude_defaults,
                     exclude_none=exclude_none,
                     custom_encoder=custom_encoder,
-                    sqlalchemy_safe=sqlalchemy_safe,
                 )
             )
         return encoded_list
@@ -187,5 +155,31 @@ def jsonable_encoder(
         exclude_defaults=exclude_defaults,
         exclude_none=exclude_none,
         custom_encoder=custom_encoder,
-        sqlalchemy_safe=sqlalchemy_safe,
     )
+
+
+def serialize_object(obj: Any) -> str:
+    """Encodes a python object to json."""
+
+    return orjson.dumps(
+        obj,
+        option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
+    ).decode()
+
+
+def deserialize_object(
+    obj: bytes | bytearray | memoryview | str | dict[str, Any]
+) -> Any:
+    """Decodes an object."""
+    if isinstance(obj, dict):
+        return obj
+
+    return orjson.loads(obj)
+
+
+def convert_datetime_to_gmt(dt: datetime) -> str:
+    """Handles datetime serialization for nested timestamps."""
+    if not dt.tzinfo:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    return dt.isoformat().replace("+00:00", "Z")
