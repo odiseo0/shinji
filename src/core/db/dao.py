@@ -4,7 +4,7 @@ from typing import Protocol, TypeVar, Any, Generic, overload, cast
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import func as sql_func
+from sqlalchemy import func as sql_func, asc, desc
 from sqlalchemy.engine import Result
 from sqlalchemy.orm import InstrumentedAttribute, RelationshipProperty
 from sqlalchemy.sql import Executable, select, Select
@@ -64,6 +64,11 @@ class DAOProtocol(Protocol[ModelType]):
     async def create(self, db: AsyncSession, db_obj: CreateSchema) -> ModelType:
         ...
 
+    async def create_many(
+        self, db: AsyncSession, obj_ins: list[CreateSchema], commit: bool = True
+    ):
+        ...
+
     async def update(
         self, db: AsyncSession, db_obj: ModelType, obj_in: UpdateSchema
     ) -> ModelType:
@@ -80,13 +85,11 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
         self.model = model
 
     async def execute(
-        self, session: AsyncSession, statement: Executable, **kwargs: Any
+        self, db: AsyncSession, statement: Executable, **kwargs: Any
     ) -> Result:
-        """
-        Execute an `statement`.
-        """
+        """Execute an `statement`."""
         with self.catch_sqlalchemy_exception():
-            return await session.execute(statement, **kwargs)
+            return await db.execute(statement, **kwargs)
 
     async def get(self, db: AsyncSession, id: UUID) -> ModelType | None:
         """Get single item by id."""
@@ -106,7 +109,8 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
     ) -> tuple[list[ModelType], int]:
         """Get multiple items."""
         statement: Select = select(self.model)
-        paginated = statement.offset(skip).limit(limit)
+        ordered = self.order_by(statement)
+        paginated = ordered.offset(skip).limit(limit)
 
         with self.catch_sqlalchemy_exception():
             [count, results] = await asyncio.gather(
@@ -132,19 +136,16 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
         return db_obj
 
     async def create_many(
-        self,
-        db: AsyncSession,
-        db_objects: list[CreateSchema],
-        commit: bool = True,
+        self, db: AsyncSession, obj_ins: list[CreateSchema], commit: bool = True
     ) -> list[ModelType]:
         """Create Many"""
         with self.catch_sqlalchemy_exception():
-            list(map(db.add, db_objects))
+            list(map(db.add, obj_ins))
 
             if commit:
                 await db.commit()
 
-        return db_objects
+        return obj_ins
 
     async def update(
         self,
@@ -198,41 +199,24 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
         return results.scalar_one()
 
     def order_by(
-        self,
-        statement: Select,
-        ordering: list[tuple[list[str], bool]],
+        self, statement: Select, ordering: list[tuple[str, bool]] | None
     ) -> Select:
+        if not ordering:
+            return statement
+
         for (accessors, is_desc) in ordering:
             field: InstrumentedAttribute
 
-            if len(accessors) == 1:
-                try:
-                    field = getattr(self.model, accessors[0])
-                    statement = statement.order_by(
-                        field.desc() if is_desc else field.asc()
-                    )
-                except AttributeError:
-                    pass
-            else:
-                valid_field = True
-                model = self.model
+            try:
+                field = getattr(self.model, accessors)
 
-                for accessor in accessors:
-                    try:
-                        field = getattr(model, accessor)
+                if isinstance(field.prop, RelationshipProperty):
+                    if field.prop.lazy != "joined":
+                        statement = statement.join(field)
 
-                        if isinstance(field.prop, RelationshipProperty):
-                            if field.prop.lazy != "joined":
-                                statement = statement.join(field)
-
-                            model = field.prop.entity.class_
-                    except AttributeError:
-                        valid_field = False
-                        break
-
-                if valid_field:
-                    statement = statement.order_by(
-                        field.desc() if is_desc else field.asc()
-                    )
+                statement = statement.order_by(desc(field) if is_desc else asc(field))
+            except AttributeError as e:
+                # NOTE: Handle this error better.
+                raise Exception() from e
 
         return statement
