@@ -131,6 +131,7 @@ def jsonable_encoder(
 
     if type(obj) in ENCODERS_BY_TYPE:
         return ENCODERS_BY_TYPE[type(obj)](obj)
+
     for encoder, classes_tuple in encoders_by_class_tuples.items():
         if isinstance(obj, classes_tuple):
             return encoder(obj)
@@ -159,8 +160,7 @@ def jsonable_encoder(
 
 
 def serialize_object(obj: Any) -> str:
-    """Encodes a python object to json."""
-
+    """Encodes a python object to a json string."""
     return orjson.dumps(
         obj,
         option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
@@ -170,14 +170,14 @@ def serialize_object(obj: Any) -> str:
 def deserialize_object(
     obj: bytes | bytearray | memoryview | str | dict[str, Any]
 ) -> Any:
-    """Decodes an object."""
+    """Decodes an object to a python datatype."""
     if isinstance(obj, dict):
         return obj
 
     return orjson.loads(obj)
 
 
-def convert_datetime_to_gmt(dt: datetime) -> str:
+def add_timezone_to_datetime(dt: datetime) -> str:
     """Handles datetime serialization for nested timestamps."""
     if not dt.tzinfo:
         dt = dt.replace(tzinfo=timezone.utc)

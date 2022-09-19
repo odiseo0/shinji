@@ -49,6 +49,14 @@ def is_valid_uuid(uuid_to_check: Any) -> UUID | None:
     return uuid_obj
 
 
+def is_hashable(obj: Any):
+    try:
+        hash(obj)
+        return True
+    except TypeError:
+        return False
+
+
 def syncify(
     func: Callable[T_ParamSpec, Coroutine[Any, Any, T_Retval]],
     raise_sync_error: bool = True,

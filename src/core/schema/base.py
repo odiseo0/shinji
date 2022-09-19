@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel as _BaseModel
 from pydantic.typing import AbstractSetIntStr, MappingIntStrAny
 
-from src.utils import deserialize_object, serialize_object, convert_datetime_to_gmt
+from src.utils import deserialize_object, serialize_object, add_timezone_to_datetime
 
 
 SetIntStr = set[int | str]
@@ -23,7 +23,7 @@ class BaseModel(_BaseModel):
         json_loads = deserialize_object
         json_dumps = serialize_object
         json_encoders = {
-            datetime: convert_datetime_to_gmt,
+            datetime: add_timezone_to_datetime,
             Enum: lambda enum: enum.value if enum else None,
             EnumMeta: None,
         }
