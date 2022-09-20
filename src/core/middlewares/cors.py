@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import re
-from typing import Sequence, cast
+from typing import Sequence, cast, TYPE_CHECKING
 
 from starlette.middleware.cors import CORSMiddleware as _CORSMiddleware
-from starlette.types import ASGIApp
+
+if TYPE_CHECKING:
+    from starlette.types import ASGIApp
 
 
 class CORSMiddleware(_CORSMiddleware):
@@ -24,10 +28,10 @@ class CORSMiddleware(_CORSMiddleware):
             compiled_origins_regex = tuple(
                 re.compile(origin_regex) for origin_regex in allow_origins_regex
             )
-            compiled_origins_regex = cast(tuple[re.Pattern])
+            compiled_origins_regex = cast("tuple[re.Pattern]", compiled_origins_regex)
 
         self.allow_origins_regex = cast(
-            tuple[re.Pattern], compiled_origins_regex or (allow_origins_regex,)
+            "tuple[re.Pattern]", compiled_origins_regex or (allow_origins_regex,)
         )
 
         super().__init__(

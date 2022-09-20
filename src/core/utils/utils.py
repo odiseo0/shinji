@@ -37,19 +37,22 @@ def chunks(iterable: Sequence, n: int, fill_value=None):
     return itertools.zip_longest(*[iter(iterable)] * n, fillvalue=fill_value)
 
 
-def is_valid_uuid(uuid_to_check: Any) -> UUID | None:
+def is_valid_uuid(uuid_to_check: Any, version: int = 4) -> UUID | bool:
     """
     Check if uuid_to_test is a valid UUID.
     """
+    if isinstance(uuid_to_check, UUID):
+        return uuid_to_check
+
     try:
-        uuid_obj = UUID(uuid_to_check, version=4)
+        uuid_obj = UUID(uuid_to_check, version=version)
     except (ValueError, AttributeError):
         return False
 
     return uuid_obj
 
 
-def is_hashable(obj: Any):
+def is_hashable(obj: Any) -> bool:
     try:
         hash(obj)
         return True

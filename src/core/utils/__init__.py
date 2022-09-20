@@ -1,5 +1,4 @@
 from .serializers import (
-    jsonable_encoder,
     add_timezone_to_datetime,
     serialize_object,
     deserialize_object,
@@ -13,3 +12,4 @@ from .utils import (
     syncify,
     asyncify,
 )
+from .encoders import jsonable_encoder

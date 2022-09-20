@@ -1,21 +1,24 @@
-from typing import AsyncGenerator
+from __future__ import annotations
+
+from typing import AsyncGenerator, TYPE_CHECKING
 from contextlib import contextmanager
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from .session import AsyncSessionFactory
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_db() -> AsyncGenerator:
     """Dependency that yields an `AsyncSession` for accessing the database."""
-    async with AsyncSessionFactory() as session:
+    async with AsyncSessionFactory() as db:
         try:
-            yield session
+            yield db
         finally:
-            await session.close()
+            await db.close()
 
 
 @contextmanager
 async def session() -> AsyncSession:
-    async with AsyncSessionFactory() as session:
-        return session
+    async with AsyncSessionFactory() as db:
+        return db

@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
 
 from starlette import status
-from starlette.types import ASGIApp, Scope, Receive, Send
+
+if TYPE_CHECKING:
+    from starlette.types import ASGIApp, Scope, Receive, Send
 
 
 class MiddlewareProtocol(Protocol):
