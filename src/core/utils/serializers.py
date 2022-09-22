@@ -16,11 +16,11 @@ DictIntStrAny = dict[int | str, Any]
 def generate_encoders_by_class_tuples(
     type_encoder_map: dict[Any, Callable[[Any], Any]]
 ) -> dict[Callable[[Any], Any], tuple[Any, ...]]:
-    encoders_by_class_tuples: dict[Callable[[Any], Any], tuple[Any, ...]] = defaultdict(
-        tuple
-    )
+    encoders_by_class_tuples = defaultdict(tuple)
+
     for type_, encoder in type_encoder_map.items():
         encoders_by_class_tuples[encoder] += (type_,)
+
     return encoders_by_class_tuples
 
 
@@ -35,23 +35,9 @@ def jsonable_encoder(
     exclude_unset: bool = False,
     exclude_defaults: bool = False,
     exclude_none: bool = False,
-    custom_encoder: dict[Any, Callable[[Any], Any]] | None = None,
 ) -> dict:
-    custom_encoder = custom_encoder or {}
-
-    if custom_encoder:
-        if type(obj) in custom_encoder:
-            return custom_encoder[type(obj)](obj)
-        else:
-            for encoder_type, encoder_instance in custom_encoder.items():
-                if isinstance(obj, encoder_type):
-                    return encoder_instance(obj)
-
     if isinstance(obj, BaseModel):
         encoder = getattr(obj.__config__, "json_encoders", {})
-
-        if custom_encoder:
-            encoder.update(custom_encoder)
 
         obj_dict = obj.dict(
             include=include,
@@ -94,29 +80,21 @@ def jsonable_encoder(
                 and (value is not None or not exclude_none)
                 and key in allowed_keys
             ):
-                encoded_key = jsonable_encoder(
-                    key,
-                    by_alias=by_alias,
-                    exclude_unset=exclude_unset,
-                    exclude_none=exclude_none,
-                    custom_encoder=custom_encoder,
-                )
+                encoded_key = jsonable_encoder(key, by_alias=by_alias)
                 encoded_value = jsonable_encoder(
                     value,
                     by_alias=by_alias,
                     exclude_unset=exclude_unset,
                     exclude_none=exclude_none,
-                    custom_encoder=custom_encoder,
                 )
                 encoded_dict[encoded_key] = encoded_value
 
         return encoded_dict
 
     if isinstance(obj, (list, set, frozenset, GeneratorType, tuple)):
-        encoded_list = []
-        for item in obj:
-            encoded_list.append(
-                jsonable_encoder(
+        return list(
+            map(
+                lambda item: jsonable_encoder(
                     item,
                     include=include,
                     exclude=exclude,
@@ -124,10 +102,10 @@ def jsonable_encoder(
                     exclude_unset=exclude_unset,
                     exclude_defaults=exclude_defaults,
                     exclude_none=exclude_none,
-                    custom_encoder=custom_encoder,
-                )
+                ),
+                obj,
             )
-        return encoded_list
+        )
 
     if type(obj) in ENCODERS_BY_TYPE:
         return ENCODERS_BY_TYPE[type(obj)](obj)
@@ -155,7 +133,6 @@ def jsonable_encoder(
         exclude_unset=exclude_unset,
         exclude_defaults=exclude_defaults,
         exclude_none=exclude_none,
-        custom_encoder=custom_encoder,
     )
 
 
