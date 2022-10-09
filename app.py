@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from src.core.db import AsyncScopedSession
 from src.settings import openapi_config, log_config
+from src.core.middlewares import TimeoutMiddleware, TimingMiddleware
 
 
 @get("/")
@@ -24,4 +25,5 @@ app = Starlite(
     route_handlers=[index, health_check],
     openapi_config=openapi_config,
     logging_config=log_config,
+    middleware=[TimeoutMiddleware, TimingMiddleware],
 )
