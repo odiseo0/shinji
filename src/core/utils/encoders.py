@@ -1,5 +1,4 @@
 import dataclasses
-from collections import defaultdict
 from types import GeneratorType
 from typing import Any, Callable
 
@@ -11,22 +10,9 @@ SetIntStr = set[int | str]
 DictIntStrAny = dict[int | str, Any]
 
 
-def generate_encoders_by_class_tuples(
-    type_encoder_map: dict[Any, Callable[[Any], Any]]
-) -> dict[Callable[[Any], Any], tuple[Any, ...]]:
-    encoders_by_class_tuples = defaultdict(tuple)
-
-    for type_, encoder in type_encoder_map.items():
-        encoders_by_class_tuples[encoder] += (type_,)
-
-    return encoders_by_class_tuples
-
-
-encoders_by_class_tuples = generate_encoders_by_class_tuples(ENCODERS_BY_TYPE)
-
-
 def schema_encoder(
     obj: Any,
+    *,
     include: SetIntStr | DictIntStrAny | None = None,
     exclude: SetIntStr | DictIntStrAny | None = None,
     by_alias: bool = True,
@@ -81,6 +67,7 @@ def schema_encoder(
 
 def dict_encoder(
     obj: dict,
+    *,
     include: SetIntStr | DictIntStrAny | None = None,
     exclude: SetIntStr | DictIntStrAny | None = None,
     by_alias: bool = True,
@@ -122,6 +109,7 @@ def dict_encoder(
 
 def sequence_encoder(
     obj: Any,
+    *,
     include: SetIntStr | DictIntStrAny | None = None,
     exclude: SetIntStr | DictIntStrAny | None = None,
     by_alias: bool = True,
@@ -149,6 +137,7 @@ def sequence_encoder(
 
 def jsonable_encoder(
     obj: Any,
+    *,
     include: SetIntStr | DictIntStrAny | None = None,
     exclude: SetIntStr | DictIntStrAny | None = None,
     by_alias: bool = True,
@@ -157,6 +146,15 @@ def jsonable_encoder(
     exclude_none: bool = False,
     custom_encoder: Callable = None,
 ) -> Any:
+    if include is not None and not isinstance(include, (set, dict)):
+        include = set(include)
+
+    if exclude is not None and not isinstance(exclude, (set, dict)):
+        exclude = set(exclude)
+
+    if custom_encoder and type(obj) in custom_encoder:
+        return custom_encoder[type(obj)](obj)
+
     if isinstance(obj, (str, int, float, type(None))):
         return obj
 
@@ -198,10 +196,6 @@ def jsonable_encoder(
 
     if type(obj) in ENCODERS_BY_TYPE:
         return ENCODERS_BY_TYPE[type(obj)](obj)
-
-    for encoder, classes_tuple in encoders_by_class_tuples.items():
-        if isinstance(obj, classes_tuple):
-            return encoder(obj)
 
     try:
         data = dict(obj)

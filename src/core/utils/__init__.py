@@ -9,6 +9,8 @@ from .utils import (
     chunks,
     is_valid_uuid,
     is_hashable,
+    unique,
+    convert_to_camel_case,
     syncify,
     asyncify,
 )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
+from enum import Enum, EnumMeta
 
 from pydantic import BaseModel as _BaseModel, ValidationError, Field
 from pydantic.error_wrappers import ErrorWrapper
@@ -29,6 +30,8 @@ class BaseModel(_BaseModel):
         json_dumps = serialize_object
         json_encoders = {
             datetime: add_timezone_to_datetime,
+            Enum: lambda enum: enum.value if enum else None,
+            EnumMeta: None,
         }
 
     @classmethod

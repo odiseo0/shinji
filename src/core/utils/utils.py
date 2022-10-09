@@ -1,7 +1,16 @@
 import unicodedata
 import itertools
 import functools
-from typing import Sequence, Any, Callable, TypeVar, Coroutine, Awaitable, ParamSpec
+from typing import (
+    Sequence,
+    Any,
+    Callable,
+    TypeVar,
+    Coroutine,
+    Awaitable,
+    ParamSpec,
+    Iterable,
+)
 from uuid import UUID
 
 import anyio
@@ -15,7 +24,8 @@ T_ParamSpec = ParamSpec("T_ParamSpec")
 
 def strip_accents(s: str) -> str:
     """
-    Remove accents from string \n
+    Remove accents from string.
+
     `Reference:` https://stackoverflow.com/a/518232/15441507
     """
     return "".join(
@@ -38,9 +48,7 @@ def chunks(iterable: Sequence, n: int, fill_value=None):
 
 
 def is_valid_uuid(uuid_to_check: Any, version: int = 4) -> UUID | bool:
-    """
-    Check if uuid_to_test is a valid UUID.
-    """
+    """Check if uuid_to_test is a valid UUID."""
     if isinstance(uuid_to_check, UUID):
         return uuid_to_check
 
@@ -53,11 +61,32 @@ def is_valid_uuid(uuid_to_check: Any, version: int = 4) -> UUID | bool:
 
 
 def is_hashable(obj: Any) -> bool:
+    """Check if an object is hashable."""
     try:
         hash(obj)
         return True
     except TypeError:
         return False
+
+
+def convert_to_camel_case(string: str) -> str:
+    """Converts a string to camel case"""
+    return "".join(
+        word if index == 0 else word.capitalize()
+        for index, word in enumerate(string.split("_"))
+    )
+
+
+def unique(value: Iterable[T]) -> list[T]:
+    """Return all unique values in a given sequence or iterator."""
+    try:
+        return list(set(value))
+    except TypeError:
+        output: list[T] = []
+        for element in value:
+            if not any(v == element for v in output):
+                output.append(element)
+        return output
 
 
 def syncify(

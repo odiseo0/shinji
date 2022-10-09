@@ -2,12 +2,19 @@ from typing import Any
 from datetime import datetime, timezone
 
 import orjson
+from asyncpg.pgproto import pgproto
 
 
 def serialize_object(obj: Any) -> str:
     """Encodes a python object to a json string."""
+
+    def _serialize(val: Any) -> Any:
+        if isinstance(val, pgproto.UUID):
+            return str(val)
+
     return orjson.dumps(
         obj,
+        default=_serialize,
         option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
     ).decode()
 
