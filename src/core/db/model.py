@@ -2,10 +2,10 @@ import re
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, MetaData, DateTime
+from sqlalchemy import Column, DateTime, MetaData
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import registry as _registry
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import registry as _registry
 
 
 @as_declarative()

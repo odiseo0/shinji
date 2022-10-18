@@ -1,21 +1,20 @@
-import unicodedata
-import itertools
 import functools
+import itertools
+import unicodedata
 from typing import (
-    Sequence,
     Any,
-    Callable,
-    TypeVar,
-    Coroutine,
     Awaitable,
-    ParamSpec,
+    Callable,
+    Coroutine,
     Iterable,
+    ParamSpec,
+    Sequence,
+    TypeVar,
 )
 from uuid import UUID
 
 import anyio
 from anyio._core._eventloop import threadlocals
-
 
 T = TypeVar("T")
 T_Retval = TypeVar("T_Retval")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import AsyncGenerator, TYPE_CHECKING
 from contextlib import contextmanager
+from typing import TYPE_CHECKING, AsyncGenerator
 
 from .session import AsyncSessionFactory
 

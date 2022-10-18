@@ -6,7 +6,7 @@ from starlette import status
 from .protocol import MiddlewareProtocol
 
 if TYPE_CHECKING:
-    from starlette.types import ASGIApp, Scope, Receive, Send
+    from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 class TimeoutMiddleware(MiddlewareProtocol):

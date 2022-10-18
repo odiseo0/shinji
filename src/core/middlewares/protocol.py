@@ -1,7 +1,7 @@
-from typing import Protocol, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from starlette.types import ASGIApp, Scope, Receive, Send
+    from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 class MiddlewareProtocol(Protocol):

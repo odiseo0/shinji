@@ -1,11 +1,11 @@
 from typing import Any
 
-from starlite import Starlite, get
 from sqlalchemy import text
+from starlite import Starlite, get
 
 from src.core.db import AsyncScopedSession
-from src.settings import openapi_config, log_config
 from src.core.middlewares import TimeoutMiddleware, TimingMiddleware
+from src.settings import log_config, openapi_config
 
 
 @get("/")

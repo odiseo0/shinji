@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import re
-from typing import Sequence, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence, cast
 
 from starlette.middleware.cors import CORSMiddleware as _CORSMiddleware
 
@@ -12,7 +10,7 @@ if TYPE_CHECKING:
 class CORSMiddleware(_CORSMiddleware):
     def __init__(
         self,
-        app: ASGIApp,
+        app: "ASGIApp",
         allow_origins: Sequence[str] = (),
         allow_methods: Sequence[str] = ("GET",),
         allow_headers: Sequence[str] = (),

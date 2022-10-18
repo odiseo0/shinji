@@ -1,15 +1,14 @@
-from __future__ import annotations
-
 from datetime import datetime
+from enum import Enum, EnumMeta
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
-from enum import Enum, EnumMeta
 
-from pydantic import BaseModel as _BaseModel, ValidationError, Field
+from pydantic import BaseModel as _BaseModel
+from pydantic import Field, ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 from pydantic.utils import ROOT_KEY
 
-from ..utils import deserialize_object, serialize_object, add_timezone_to_datetime
+from ..utils import add_timezone_to_datetime, deserialize_object, serialize_object
 
 if TYPE_CHECKING:
     from pydantic.typing import AbstractSetIntStr, MappingIntStrAny
@@ -35,7 +34,7 @@ class BaseModel(_BaseModel):
         }
 
     @classmethod
-    def parse_obj(cls: type[BaseModel], obj: Any) -> BaseModel:
+    def parse_obj(cls: type["BaseModel"], obj: Any) -> "BaseModel":
         """Redefined to use `vars()` instead of `dict()`."""
         obj = cls._enforce_dict_if_root(obj)
 
@@ -56,8 +55,8 @@ class BaseModel(_BaseModel):
     def dict(
         self,
         *,
-        include: AbstractSetIntStr | MappingIntStrAny = None,
-        exclude: AbstractSetIntStr | MappingIntStrAny = None,
+        include: "AbstractSetIntStr" | "MappingIntStrAny" = None,
+        exclude: "AbstractSetIntStr" | "MappingIntStrAny" = None,
         by_alias: bool = False,
         skip_defaults: bool | None = None,
         exclude_unset: bool = False,

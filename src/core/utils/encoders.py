@@ -5,7 +5,6 @@ from typing import Any, Callable
 from pydantic import BaseModel
 from pydantic.json import ENCODERS_BY_TYPE
 
-
 SetIntStr = set[int | str]
 DictIntStrAny = dict[int | str, Any]
 

@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import contextmanager
-from typing import Protocol, TypeVar, Any, Generic, overload, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar, cast, overload
 
 from pydantic import BaseModel
-from sqlalchemy import func as sql_func, asc, desc
-from sqlalchemy.orm import InstrumentedAttribute, RelationshipProperty
-from sqlalchemy.sql import Executable, select, Select
-from sqlalchemy.sql.selectable import ReturnsRows
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import asc, desc
+from sqlalchemy import func as sql_func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute, RelationshipProperty
+from sqlalchemy.sql import Executable, Select, select
+from sqlalchemy.sql.selectable import ReturnsRows
 
-from .model import Base
 from ..utils import jsonable_encoder
+from .model import Base
 
 if TYPE_CHECKING:
     from uuid import UUID
+
     from sqlalchemy.engine import Result
 
 

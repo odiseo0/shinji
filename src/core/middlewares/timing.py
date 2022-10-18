@@ -6,7 +6,7 @@ from starlette.datastructures import MutableHeaders
 from .protocol import MiddlewareProtocol
 
 if TYPE_CHECKING:
-    from starlette.types import ASGIApp, Scope, Receive, Send
+    from starlette.types import ASGIApp, Receive, Scope, Send
     from starlite.types import Message
 
 
