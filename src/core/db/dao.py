@@ -13,6 +13,7 @@ from sqlalchemy.orm import InstrumentedAttribute, RelationshipProperty
 from sqlalchemy.sql import Executable, Select, select
 from sqlalchemy.sql.selectable import ReturnsRows
 
+from core.types import Empty, EmptyType
 from ..utils import jsonable_encoder
 from .model import Base
 
@@ -89,7 +90,7 @@ class DAOProtocol(Protocol[ModelType]):
         ...
 
 
-class DAOBase(DAOProtocol, Generic[ModelType]):
+class DAOBase(DAOProtocol, Generic[ModelType, CreateSchema, UpdateSchema]):
     """DAO Base that performs all the basic CRUD operations."""
 
     def __init__(self, model: type[ModelType]):
@@ -102,7 +103,7 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
         with catch_sqlalchemy_exception():
             return await db.execute(statement, **kwargs)
 
-    async def get(self, db: AsyncSession, id: UUID) -> ModelType | None:
+    async def get(self, db: AsyncSession, id: UUID) -> ModelType | EmptyType:
         """Get single item by id."""
         statement: Select = select(self.model).where(self.model.id == id)
 
@@ -110,7 +111,7 @@ class DAOBase(DAOProtocol, Generic[ModelType]):
         db_object = results.first()
 
         if db_object is None:
-            return None
+            return Empty
 
         return cast("ModelType", db_object[0])
 
