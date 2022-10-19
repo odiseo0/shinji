@@ -36,9 +36,7 @@ def catch_sqlalchemy_exception() -> Any:
     """
     try:
         yield
-    except IntegrityError as e:
-        raise Exception() from e
-    except SQLAlchemyError as e:
+    except (IntegrityError, SQLAlchemyError) as e:
         raise Exception() from e
 
 
@@ -110,7 +108,7 @@ class DAOBase(DAOProtocol, Generic[ModelType, CreateSchema, UpdateSchema]):
         results = await self.execute(db, statement)
         db_object = results.first()
 
-        if db_object is None:
+        if not db_object:
             return Empty
 
         return cast("ModelType", db_object[0])
@@ -221,9 +219,11 @@ class DAOBase(DAOProtocol, Generic[ModelType, CreateSchema, UpdateSchema]):
             try:
                 field = getattr(self.model, attr)
 
-                if isinstance(field.prop, RelationshipProperty):
-                    if field.prop.lazy != "joined":
-                        statement = statement.join(field)
+                if (
+                    isinstance(field.prop, RelationshipProperty)
+                    and field.prop.lazy != "joined"
+                ):
+                    statement = statement.join(field)
 
                 statement = statement.order_by(desc(field) if is_desc else asc(field))
             except AttributeError as e:

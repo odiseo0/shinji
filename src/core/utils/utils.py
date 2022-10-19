@@ -1,12 +1,14 @@
 import functools
 import itertools
 import unicodedata
+from itertools import chain
 from typing import (
     Any,
     Awaitable,
     Callable,
     Coroutine,
     Iterable,
+    Mapping,
     ParamSpec,
     Sequence,
     TypeVar,
@@ -15,6 +17,7 @@ from uuid import UUID
 
 import anyio
 from anyio._core._eventloop import threadlocals
+
 
 T = TypeVar("T")
 T_Retval = TypeVar("T_Retval")
@@ -78,14 +81,43 @@ def convert_to_camel_case(string: str) -> str:
 
 def unique(value: Iterable[T]) -> list[T]:
     """Return all unique values in a given sequence or iterator."""
-    try:
-        return list(set(value))
-    except TypeError:
-        output: list[T] = []
-        for element in value:
-            if not any(v == element for v in output):
-                output.append(element)
-        return output
+    output: list[T] = []
+
+    for element in value:
+        if element not in output:
+            output.append(element)
+
+    return output
+
+
+def merge_dicts(value_1: Mapping, value_2: Mapping) -> dict:
+    """Merge two dictionaries into a single one."""
+    if not value_1 or not value_2:
+        return {}
+
+    if not isinstance(value_1, dict):
+        try:
+            value_1 = dict(value_1)
+        except Exception as e:
+            errors = [e]
+            try:
+                value_1 = vars(value_1)
+            except Exception as e:
+                errors.append(e)
+                raise ValueError(errors)
+
+    if not isinstance(value_2, dict):
+        try:
+            value_2 = dict(value_2)
+        except Exception as e:
+            errors = [e]
+            try:
+                value_2 = vars(value_2)
+            except Exception as e:
+                errors.append(e)
+                raise ValueError(errors)
+
+    return dict(chain(value_1.items(), value_2.items()))
 
 
 def syncify(
@@ -101,7 +133,7 @@ def syncify(
         current_async_module = getattr(threadlocals, "current_async_module", None)
         partial_f = functools.partial(func, *args, **kwargs)  # bind parameters here.
 
-        if current_async_module is None and raise_sync_error is False:
+        if current_async_module is None and not raise_sync_error:
             return anyio.run(partial_f)
 
         return anyio.from_thread.run(partial_f)

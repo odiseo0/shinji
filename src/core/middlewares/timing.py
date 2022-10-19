@@ -28,7 +28,7 @@ class TimingMiddleware(MiddlewareProtocol):
                 headers = MutableHeaders(scope=message)
                 headers.append(
                     "X-Process-Time",
-                    f"{scope.get('path')[1:].replace('/', '.')} {str(process_time) + ' time:wall'}",
+                    f"{scope.get('path')[1:].replace('/', '.')} {str(process_time)} time:wall",
                 )
 
             await send(message)

@@ -1,14 +1,18 @@
 from datetime import datetime
 from enum import Enum, EnumMeta
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, ValidationError
+from pydantic import ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 from pydantic.utils import ROOT_KEY
 
-from ..utils import add_timezone_to_datetime, deserialize_object, serialize_object
+from ..utils import (
+    add_timezone_to_datetime,
+    deserialize_object,
+    serialize_object,
+    convert_to_camel_case,
+)
 
 if TYPE_CHECKING:
     from pydantic.typing import AbstractSetIntStr, MappingIntStrAny
@@ -17,14 +21,13 @@ if TYPE_CHECKING:
 class BaseModel(_BaseModel):
     """Base schema for all objects."""
 
-    id: Any = Field(default_factory=uuid4)
-
     class Config:
         exclude = set()
         orm_mode = True
         smart_union = True
         use_enum_values = True
         arbitrary_types_allowed = True
+        alias_generator = convert_to_camel_case
         json_loads = deserialize_object
         json_dumps = serialize_object
         json_encoders = {
